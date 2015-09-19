@@ -7,15 +7,8 @@
 
 #define KEY_DATA 5
 
-static Window *s_main_window, *menu_window;
-static TextLayer *s_output_layer, *menu_text_layer;
-static char s_buffer[64];
-
-
-/*************************************
-*          APPMESSAGE STUFF          *
-*************************************/
-
+static Window *s_main_window;
+static TextLayer *s_output_layer;
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Get the first pair
@@ -23,12 +16,15 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // Process all pairs present
   while (t != NULL) {
+    // Long lived buffer
+    static char s_buffer[64];
 
     // Process this pair's key
     switch (t->key) {
       case KEY_DATA:
         // Copy value and display
         snprintf(s_buffer, sizeof(s_buffer), "Received '%s'", t->value->cstring);
+        text_layer_set_text(s_output_layer, s_buffer);
         break;
     }
 
@@ -49,74 +45,10 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
-
-/*************************************
-*          MENUWINDOW STUFF          *
-*************************************/
-
-static void menu_window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect window_bounds = layer_get_bounds(window_layer);
-
-  // Create output TextLayer
-  menu_text_layer = text_layer_create(GRect(5, 0, window_bounds.size.w - 5, window_bounds.size.h));
-  text_layer_set_font(menu_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text(menu_text_layer, "Here are your five closest stops...");
-  text_layer_set_text_alignment(menu_text_layer,GTextAlignmentCenter);
-  text_layer_set_overflow_mode(menu_text_layer, GTextOverflowModeWordWrap);
-  layer_add_child(window_layer, text_layer_get_layer(menu_text_layer));
-}
-
-static void menu_window_unload(Window *window) {
-  // Destroy output TextLayer
-  text_layer_destroy(menu_text_layer);
-}
-
-
-/*************************************
-*          MAINWINDOW STUFF          *
-*************************************/
-
-
 static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
 
-  // Create output TextLayer
-  s_output_layer = text_layer_create(GRect(5, 0, window_bounds.size.w - 5, window_bounds.size.h));
-  text_layer_set_font(s_output_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text(s_output_layer, "Welcome to the TCAT Pebble App...");
-  text_layer_set_text_alignment(s_output_layer,GTextAlignmentCenter);
-  text_layer_set_overflow_mode(s_output_layer, GTextOverflowModeWordWrap);
-  layer_add_child(window_layer, text_layer_get_layer(s_output_layer));
-}
-
-static void main_window_unload(Window *window) {
-  // Destroy output TextLayer
-  text_layer_destroy(s_output_layer);
-}
-
-static void main_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-  menu_window = window_create();
-  window_set_window_handlers(menu_window, (WindowHandlers) {
-    .load = menu_window_load,
-    .unload = menu_window_unload
-  });
-//   window_set_click_config_provider(menu_window, (ClickConfigProvider) menu_config_provider);
-  window_stack_push(menu_window, true);
-}
-
-static void main_config_provider(Window *window) {
-  // Press any button to continue
-  window_single_click_subscribe(BUTTON_ID_UP, main_single_click_handler);
-  window_single_click_subscribe(BUTTON_ID_SELECT, main_single_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, main_single_click_handler);
-}
-
-static void next_window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect window_bounds = layer_get_bounds(window_layer);
-       
   // Create output TextLayer
   s_output_layer = text_layer_create(GRect(5, 0, window_bounds.size.w - 5, window_bounds.size.h));
   text_layer_set_font(s_output_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
@@ -125,7 +57,10 @@ static void next_window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(s_output_layer));
 }
 
-
+static void main_window_unload(Window *window) {
+  // Destroy output TextLayer
+  text_layer_destroy(s_output_layer);
+}
 
 static void init() {
   // Register callbacks
@@ -143,7 +78,6 @@ static void init() {
     .load = main_window_load,
     .unload = main_window_unload
   });
-  window_set_click_config_provider(s_main_window, (ClickConfigProvider) main_config_provider);
   window_stack_push(s_main_window, true);
 }
 
