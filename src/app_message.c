@@ -30,7 +30,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_DATA:
         // Copy value and display
         snprintf(s_buffer, sizeof(s_buffer), "Received '%s'", t->value->cstring);
-//         text_layer_set_text(s_output_layer, s_buffer);
+        text_layer_set_text(s_output_layer, s_buffer);
         break;
     }
 
@@ -92,11 +92,6 @@ static void menu_window_unload(Window *window) {
 
 // Main screen click handler, opens next window
 static void main_click_handler(ClickRecognizerRef recognizer, void *context) {
-  menu_window = window_create();
-  window_set_window_handlers(menu_window, (WindowHandlers) {
-    .load = menu_window_load,
-    .unload = menu_window_unload
-  });
   window_stack_push(menu_window,true);
 }
 
@@ -142,12 +137,22 @@ static void init() {
     .unload = main_window_unload
   });
   window_set_click_config_provider(s_main_window, main_click_config_provider);
+  
+  // Create menu Windows
+  menu_window = window_create();
+  window_set_window_handlers(menu_window, (WindowHandlers) {
+    .load = menu_window_load,
+    .unload = menu_window_unload
+  });
+  
+  // Start at main window
   window_stack_push(s_main_window, true);
 }
 
 static void deinit() {
   // Destroy main Window
   window_destroy(s_main_window);
+  window_destroy(menu_window);
 }
 
 int main(void) {
