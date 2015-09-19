@@ -1,5 +1,6 @@
 {
     "appKeys": {
+        "KEY_DATA": 5,
         "message": 1,
         "status": 0
     },
