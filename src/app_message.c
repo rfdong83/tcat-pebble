@@ -7,8 +7,14 @@
 
 #define KEY_DATA 5
 
-static Window *s_main_window;
+static Window *s_main_window,*menu_window;
 static TextLayer *s_output_layer;
+static SimpleMenuLayer *menu_layer;
+static SimpleMenuSection sections[1];
+static SimpleMenuItem items[5];
+
+
+// APP MESSAGE---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
   // Get the first pair
@@ -24,7 +30,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_DATA:
         // Copy value and display
         snprintf(s_buffer, sizeof(s_buffer), "Received '%s'", t->value->cstring);
-        text_layer_set_text(s_output_layer, s_buffer);
+//         text_layer_set_text(s_output_layer, s_buffer);
         break;
     }
 
@@ -45,6 +51,14 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
+
+// MENU WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+// MAIN WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
@@ -52,8 +66,9 @@ static void main_window_load(Window *window) {
   // Create output TextLayer
   s_output_layer = text_layer_create(GRect(5, 0, window_bounds.size.w - 5, window_bounds.size.h));
   text_layer_set_font(s_output_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text(s_output_layer, "Waiting...");
+  text_layer_set_text(s_output_layer, "Welcome to the TCAT App...");
   text_layer_set_overflow_mode(s_output_layer, GTextOverflowModeWordWrap);
+  text_layer_set_text_alignment(s_output_layer,GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(s_output_layer));
 }
 
@@ -78,6 +93,7 @@ static void init() {
     .load = main_window_load,
     .unload = main_window_unload
   });
+  window_set_click_config_provider(set, click_config_provider);
   window_stack_push(s_main_window, true);
 }
 
