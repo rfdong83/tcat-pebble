@@ -54,10 +54,58 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 
 // MENU WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+static void test() {
+  
+}
 
+static void menu_window_load(Window *window) {
+  Layer *window_layer = window_get_root_layer(window);
+  GRect window_bounds = layer_get_bounds(window_layer);
+  
+  // Make SimpleItems
+  int i = 0;
+  for (; i < 5; i++) {
+    items[i] = (SimpleMenuItem) {
+      .title = "Item",
+      .callback = test
+    };
+  }
+  
+  // Populating the section with items
+  sections[0] = (SimpleMenuSection) {
+    .title = "The Five Closest Stops",
+    .num_items = 5,
+    .items = items
+  };
+  
+  // Create SimpleMenuLayer
+  menu_layer = simple_menu_layer_create(window_bounds,window,sections,1,NULL);
+  layer_add_child(window_layer,simple_menu_layer_get_layer(menu_layer));
+}
+
+static void menu_window_unload(Window *window) {
+  simple_menu_layer_destroy(menu_layer);
+}
 
 // MAIN WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+// Main screen click handler, opens next window
+static void main_click_handler(ClickRecognizerRef recognizer, void *context) {
+  menu_window = window_create();
+  window_set_window_handlers(menu_window, (WindowHandlers) {
+    .load = menu_window_load,
+    .unload = menu_window_unload
+  });
+  window_stack_push(menu_window,true);
+}
+
+// Main click config, same for all buttons
+static void main_click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_UP, main_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, main_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, main_click_handler);
+}
 
 static void main_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
@@ -93,7 +141,7 @@ static void init() {
     .load = main_window_load,
     .unload = main_window_unload
   });
-  window_set_click_config_provider(set, click_config_provider);
+  window_set_click_config_provider(s_main_window, main_click_config_provider);
   window_stack_push(s_main_window, true);
 }
 
