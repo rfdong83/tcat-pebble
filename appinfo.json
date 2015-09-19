@@ -1,43 +1,26 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "message": 1,
+        "status": 0
+    },
     "capabilities": [
-        ""
+        "location"
     ],
-    "companyName": "rfd83@cornell.edu",
-    "longName": "TCAT Pebble",
-    "projectType": "pebblejs",
+    "companyName": "UncontainedHype",
+    "longName": "TCAT App",
+    "projectType": "native",
     "resources": {
-        "media": [
-            {
-                "file": "images/menu_icon.png",
-                "menuIcon": true,
-                "name": "IMAGE_MENU_ICON",
-                "type": "png"
-            },
-            {
-                "file": "images/logo_splash.png",
-                "name": "IMAGE_LOGO_SPLASH",
-                "type": "png"
-            },
-            {
-                "file": "images/tile_splash.png",
-                "name": "IMAGE_TILE_SPLASH",
-                "type": "png"
-            },
-            {
-                "file": "fonts/UbuntuMono-Regular.ttf",
-                "name": "MONO_FONT_14",
-                "type": "font"
-            }
-        ]
+        "media": []
     },
     "sdkVersion": "3",
-    "shortName": "TCAT Pebble",
-    "uuid": "37affa46-ca41-47b0-828a-290fb9673513",
-    "versionCode": 1,
+    "shortName": "TCAT App",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "0828ef94-ceaa-4120-8ecb-28656589044f",
     "versionLabel": "1.0",
     "watchapp": {
-        "hiddenApp": false,
         "watchface": false
     }
 }
