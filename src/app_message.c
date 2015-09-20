@@ -159,6 +159,15 @@ static void menu_window_unload(Window *window) {
 
 // STOP WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+// Parse string
+static char* parse_stop_text(char* stop_text) {
+  char * pch;
+  pch = strtok (stop_text,",");
+  while (pch != NULL) {  
+    pch = strtok (NULL, ",");
+  }
+}
+
 // Stop screen load
 static void stop_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);

@@ -36,8 +36,8 @@ function five_n_sort(a) {
 
 function convertTime(s) {
     var colonInd = s.indexOf(":");
-    var hours = +s.slice(0,colonInd);
-    var minutes = +s.slice(colonInd+1,colonInd+3);
+    var hours = parseInt(s.slice(0,colonInd));
+    var minutes = parseInt(s.slice(colonInd+1,colonInd+3));
     if(s.length > colonInd + 3){
       var ampm = s.slice(colonInd+3);
       if(ampm == 'PM' && hours == 12){
@@ -49,6 +49,9 @@ function convertTime(s) {
       if (ampm == "PM") {
         return (hours + 12)*60 + minutes;
       } 
+      else {
+        return hours*60 + minutes;
+      }
     }
     else{
       return hours*60 + minutes;
@@ -101,8 +104,8 @@ function findStops(lat, long){
 
 function findRoutes(stop){
   var routes = route_data.filter(function(a){return a.Stop == stop && a.Day == day;});
-  console.log(routes.length);
-  routes.sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time) - time);});
+  routes.sort(function(a,b){return (Math.abs(convertTime(a.Time) - convertTime(time))) -
+                                    Math.abs((convertTime(b.Time) - convertTime(time)));});
   routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));  
   
   
@@ -144,11 +147,7 @@ function success(pos) {
   dict[7] = findRoutes(stops[2]);
   dict[8] = findRoutes(stops[3]);
   dict[9] = findRoutes(stops[4]);
-  
-  for (var i = 5; i < 10; i++) {
-    console.log(dict[i]);
-  }
-  
+    
   // Send the data 
   Pebble.sendAppMessage(dict,
     function(e) {
