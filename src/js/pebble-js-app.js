@@ -4,11 +4,11 @@
  */
 
 var NUM_STOPS = 5;
-var NUM_ROUTES = 10;
+var NUM_ROUTES = 5;
 var STOP_URL = 'http://cornelldata.org/api/v0/TCAT-data/stop-locations';
-var STOP_SCHED = 'http://cornelldata.org/api/v0/TCAT-data/stop-schedules';
+var ROUTE_URL = 'https://cornelldata.org/api/v0/TCAT-data/route-schedules';
 var stop_data;
-var stop_schedules_data;
+var route_data;
 
 function latLongDist(lat1, long1, lat2, long2){
   return (lat1-lat2)*(lat1-lat2) + (long1-long2)*(long1-long2);
@@ -31,7 +31,7 @@ function loadStops(){
   req.onload = function(){
     if(req.readyState === 4){
       stop_data = JSON.parse(req.responseText);
-      loadStopSchedules();
+      loadRoutes();
     }
     else{
       console.log('Error');
@@ -40,12 +40,12 @@ function loadStops(){
   req.send(null);
 }
 
-function loadStopSchedules(){
+function loadRoutes(){
   var req = new XMLHttpRequest();
-  req.open('GET',STOP_SCHED, true);
+  req.open('GET',ROUTE_URL, true);
   req.onload = function(){
     if(req.readyState === 4){
-      stop_schedules_data = JSON.parse(req.responseText);
+      route_data = JSON.parse(req.responseText);
     }
     else{
       console.log('Error');
@@ -66,16 +66,17 @@ function findStops(lat, long){
   return closest_stops;
 }
 
-function findRoutes(time, stop){
-  var routes = stop_schedules_data.filter(function(a){return a.Stop == stop;})
-    .sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time)-time);});
+function findRoutes(time, day, stop){
+  var routes = route_data.filter(function(a){return a.Stop == stop && a.Day == day;})
+    .sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time) - time);});
   routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));  
+  
   
   var routeString = '';
   for (var i=0; i<routes.length; i++) {
-    routeString += routes[i].Stop + ',' + routes[i].Time + ',';
+    routeString += routes[i].Route + ',' + routes[i].Time + ',' + (routes[i].Direction == 'Inbound' ? 'I' : 'O') + ',';
   }
-  return routeString;
+  return routeString.substring(0,routeString.length-1);
 }
 
 
@@ -95,19 +96,18 @@ function success(pos) {
   var crd = pos.coords;
   var dict = {};
   
-  var stops = findStops(crd.latitude, crd.longitude);
-  for (var i=0; i<stops.length; i++) {
-    dict.push({
-      key: i,
-      value: stops[i]
-    });
-  }
-  for (var j=0; j<stops.length; j++) {
-    dict.push({
-      key: j+5,
-      value: findRoutes(time, stops[j])
-    });
-  }
+  var stops = findStops(crd.latitude, crd.longitude);    
+  
+  dict[0] = stops[0];
+  dict[1] = stops[1];
+  dict[2] = stops[2];
+  dict[3] = stops[3];
+  dict[4] = stops[4];
+  dict[5] = findRoutes(time, day, stops[0]);
+  dict[6] = findRoutes(time, day, stops[1]);
+  dict[7] = findRoutes(time, day, stops[2]);
+  dict[8] = findRoutes(time, day, stops[3]);
+  dict[9] = findRoutes(time, day, stops[4]);
   
   // Send the data 
   Pebble.sendAppMessage(dict,
