@@ -41,7 +41,6 @@ static void request_bus_data() {
   // SEND IT
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "did");
   dict_write_cstring(iter, 10, weekday);
   dict_write_cstring(iter, 11, time);
   app_message_outbox_send();
@@ -96,6 +95,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         // Copy value and display
         snprintf(sched[4], sizeof(sched[4]), "%s", t->value->cstring);
         break;
+      case 12:
+        // Request Bus Data by giving time and day
+        request_bus_data();
     }
 
     // Get next pair, if any
@@ -240,10 +242,7 @@ static void init() {
     .load = stop_window_load,
     .unload = stop_window_unload
   });
-  
-  // Request Bus Data by giving time and day
-  request_bus_data();
-  
+    
   // Start at main window
   window_stack_push(s_main_window, true);
 }
