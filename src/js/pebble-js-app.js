@@ -140,12 +140,16 @@ function error(err) {
 
 // Intial calback function from first communication
 Pebble.addEventListener('ready', function(e) {
+  Pebble.sendAppMessage({12:'Happy Fuckb0i Day! 9/19/2015'},
+                       function(e){console.log('Send successful.');},
+                       function(e){console.log('Send failed!');});
   console.log('PebbleKit JS Ready!');
 });
 
 
 Pebble.addEventListener('appmessage', function(dict) {
   console.log('Asking for GPS coords...');
+  console.log(dict);
   day = dict[10];
   time = dict[11];
   

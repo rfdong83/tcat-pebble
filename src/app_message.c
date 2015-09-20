@@ -41,6 +41,7 @@ static void request_bus_data() {
   // SEND IT
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "did");
   dict_write_cstring(iter, 10, weekday);
   dict_write_cstring(iter, 11, time);
   app_message_outbox_send();
