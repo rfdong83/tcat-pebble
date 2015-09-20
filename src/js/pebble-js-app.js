@@ -9,6 +9,8 @@ var STOP_URL = 'http://cornelldata.org/api/v0/TCAT-data/stop-locations';
 var ROUTE_URL = 'https://cornelldata.org/api/v0/TCAT-data/route-schedules';
 var stop_data;
 var route_data;
+var time;
+var day;
 
 function latLongDist(lat1, long1, lat2, long2){
   return (lat1-lat2)*(lat1-lat2) + (long1-long2)*(long1-long2);
@@ -18,11 +20,21 @@ function convertTime(s) {
     var colonInd = s.indexOf(":");
     var hours = +s.slice(0,colonInd);
     var minutes = +s.slice(colonInd+1,colonInd+3);
-    var PM = 0;
-    if (s.slice(colonInd+3) == "PM") {
-        PM = 12;
+    if(s.length > colonInd + 3){
+      var ampm = s.slice(colonInd+3);
+      if(ampm == 'PM' && hours == 12){
+        return hours*60 + minutes;      
+      }
+      if(ampm == 'AM' && hours == 12){
+        return minutes;
+      }
+      if (ampm == "PM") {
+        return (hours + 12)*60 + minutes;
+      } 
     }
-    return (hours+PM)*60 + minutes;
+    else{
+      return hours*60 + minutes;
+    }
 }
 
 function loadStops(){
@@ -66,7 +78,7 @@ function findStops(lat, long){
   return closest_stops;
 }
 
-function findRoutes(time, day, stop){
+function findRoutes(stop){
   var routes = route_data.filter(function(a){return a.Stop == stop && a.Day == day;})
     .sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time) - time);});
   routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));  
@@ -94,20 +106,20 @@ var options = {
 /* Upon sucessful  */
 function success(pos) {
   var crd = pos.coords;
-  var dict = {};
   
   var stops = findStops(crd.latitude, crd.longitude);    
   
+  var dict = {};
   dict[0] = stops[0];
   dict[1] = stops[1];
   dict[2] = stops[2];
   dict[3] = stops[3];
   dict[4] = stops[4];
-  dict[5] = findRoutes(time, day, stops[0]);
-  dict[6] = findRoutes(time, day, stops[1]);
-  dict[7] = findRoutes(time, day, stops[2]);
-  dict[8] = findRoutes(time, day, stops[3]);
-  dict[9] = findRoutes(time, day, stops[4]);
+  dict[5] = findRoutes(stops[0]);
+  dict[6] = findRoutes(stops[1]);
+  dict[7] = findRoutes(stops[2]);
+  dict[8] = findRoutes(stops[3]);
+  dict[9] = findRoutes(stops[4]);
   
   // Send the data 
   Pebble.sendAppMessage(dict,
@@ -130,14 +142,14 @@ function error(err) {
 Pebble.addEventListener('ready', function(e) {
   console.log('PebbleKit JS Ready!');
   
-  loadStops();
-  navigator.geolocation.getCurrentPosition(success, error, options);
-  
+  loadStops();  
 });
 
 
-Pebble.addEventListener('gpsrequest', function(e) {
+Pebble.addEventListener('appmessage', function(dict) {
   console.log('Asking for GPS coords...');
+  day = dict[10];
+  time = dict[11];
   
   navigator.geolocation.getCurrentPosition(success, error, options);
 });
