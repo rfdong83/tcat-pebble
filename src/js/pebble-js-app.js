@@ -16,6 +16,24 @@ function latLongDist(lat1, long1, lat2, long2){
   return (lat1-lat2)*(lat1-lat2) + (long1-long2)*(long1-long2);
 }
 
+function five_n_sort(a) {
+  var ans = [];
+  var running_min;
+  for (var i = 0; i < 5; i++) {
+    running_min = Number.MAX_SAFE_INTEGER;
+    var iid = 0;
+    for (var j = 0; j < a.length; j++) {
+      if (running_min > a[j][1]) {
+          running_min = a[j][1];
+          iid = j;
+      }
+    }
+    ans.push(a[iid]);
+    a.splice(iid,1);
+  }
+  return ans;
+}
+
 function convertTime(s) {
     var colonInd = s.indexOf(":");
     var hours = +s.slice(0,colonInd);
@@ -71,17 +89,22 @@ function findStops(lat, long){
     var dist =  latLongDist(lat, long, s.Latitude, s.Longitude);
     return [s.Name,dist];
   });
-  var closest_stops = 
-    dists.sort(function(a,b){return a[1] - b[1];})
-    .slice(0,Math.min(stop_data.length,NUM_STOPS))
-    .map(function(a){return a[0];});
+  var closest_stops = five_n_sort(dists);
+  
+  for (var i = 0; i < closest_stops.length; i++ ) {
+    console.log(closest_stops[i][0] + ' ' + closest_stops[i][1]);
+  }
+  
+  closest_stops = closest_stops.map(function(a){return a[0];});
   return closest_stops;
 }
 
 function findRoutes(stop){
-  var routes = route_data.filter(function(a){return a.Stop == stop && a.Day == day;})
-    .sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time) - time);});
+  var routes = route_data.filter(function(a){return a.Stop == stop && a.Day == day;});
+  console.log(routes.length);
+  routes.sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time) - time);});
   routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));  
+  
   
   var routeString = '';
   for (var i=0; i<routes.length; i++) {
@@ -106,7 +129,9 @@ var options = {
 function success(pos) {
   var crd = pos.coords;
   
-  var stops = findStops(crd.latitude, crd.longitude);    
+  console.log(crd.latitude + ' ' + crd.longitude);
+  
+  var stops = findStops(crd.latitude, crd.longitude);
   
   var dict = {};
   dict[0] = stops[0];
@@ -119,6 +144,10 @@ function success(pos) {
   dict[7] = findRoutes(stops[2]);
   dict[8] = findRoutes(stops[3]);
   dict[9] = findRoutes(stops[4]);
+  
+  for (var i = 5; i < 10; i++) {
+    console.log(dict[i]);
+  }
   
   // Send the data 
   Pebble.sendAppMessage(dict,
@@ -146,11 +175,10 @@ Pebble.addEventListener('ready', function(e) {
 });
 
 
-Pebble.addEventListener('appmessage', function(dict) {
+Pebble.addEventListener('appmessage', function(e) {
   console.log('Asking for GPS coords...');
-  console.log(dict);
-  day = dict[10];
-  time = dict[11];
+  day = e.payload[10];
+  time = e.payload[11];
   
   navigator.geolocation.getCurrentPosition(success, error, options);
 });
