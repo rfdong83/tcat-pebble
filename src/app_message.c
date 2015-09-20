@@ -9,13 +9,64 @@
 #define KEY_DATA 5
 
 static Window *s_main_window,*menu_window,*stop_window;
-static TextLayer *s_output_layer,*stop_text_layer;
-static SimpleMenuLayer *menu_layer;
+static TextLayer *s_output_layer;
+static SimpleMenuLayer *menu_layer, *stop_layer;
 static SimpleMenuSection sections[1];
 static SimpleMenuItem items[5];
 static char stops[5][30];
 static char sched[5][100];
 static char stop_text[100];
+
+char *
+strtok(s, delim)
+	register char *s;
+	register const char *delim;
+{
+	register char *spanp;
+	register int c, sc;
+	char *tok;
+	static char *last;
+
+
+	if (s == NULL && (s = last) == NULL)
+		return (NULL);
+
+	/*
+	 * Skip (span) leading delimiters (s += strspn(s, delim), sort of).
+	 */
+cont:
+	c = *s++;
+	for (spanp = (char *)delim; (sc = *spanp++) != 0;) {
+		if (c == sc)
+			goto cont;
+	}
+
+	if (c == 0) {		/* no non-delimiter characters */
+		last = NULL;
+		return (NULL);
+	}
+	tok = s - 1;
+
+	/*
+	 * Scan token (scan for delimiters: s += strcspn(s, delim), sort of).
+	 * Note that delim must have one NUL; we stop if we see that, too.
+	 */
+	for (;;) {
+		c = *s++;
+		spanp = (char *)delim;
+		do {
+			if ((sc = *spanp++) == c) {
+				if (c == 0)
+					s = NULL;
+				else
+					s[-1] = 0;
+				last = s;
+				return (tok);
+			}
+		} while (sc != 0);
+	}
+	/* NOTREACHED */
+}
 
 
 // APP MESSAGE---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -159,31 +210,67 @@ static void menu_window_unload(Window *window) {
 
 // STOP WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// Parse string
-static char* parse_stop_text(char* stop_text) {
-  char * pch;
-  pch = strtok (stop_text,",");
-  while (pch != NULL) {  
-    pch = strtok (NULL, ",");
-  }
+static void stop_click_handler(ClickRecognizerRef recognizer, void *context) {
+  window_stack_remove(stop_window,true);
 }
+
+// Main click config, same for all buttons
+static void stop_click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_BACK, stop_click_handler);
+}
+
 
 // Stop screen load
 static void stop_window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect window_bounds = layer_get_bounds(window_layer);
+  Layer *stop_window_layer = window_get_root_layer(window);
+  GRect window_bounds = layer_get_bounds(stop_window_layer);
   
-  stop_text_layer = text_layer_create(window_bounds);
-  text_layer_set_font(stop_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text(stop_text_layer, stop_text);
-  text_layer_set_overflow_mode(stop_text_layer, GTextOverflowModeWordWrap);
-  text_layer_set_text_alignment(stop_text_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(stop_text_layer));
+  int empty = 0;
+  
+  // Make SimpleItems
+  int i = 0;
+  for (; i < 5; i++) {
+    char* title = strtok(stop_text, ",");
+    char* sub = strtok(stop_text, ",");
+    strtok(stop_text,",");
+    if (!title) {
+      empty = 1;
+      break;
+    }
+    items[i] = (SimpleMenuItem) {
+      .title = title,
+      .subtitle = sub
+    };
+  }
+  
+  // Populating the section with items
+  if (!empty) {
+    sections[0] = (SimpleMenuSection) {
+    .title = "Incoming Buses",
+    .num_items = 5,
+    .items = items
+    };
+  }
+  else {
+    items[0] = (SimpleMenuItem) {
+      .title = "No buses available at the moment"
+    };
+    sections[0] = (SimpleMenuSection) {
+      .title = "Incoming Buses",
+      .num_items = 1,
+      .items = items
+    };
+  }
+
+  
+  // Create SimpleMenuLayer
+  stop_layer = simple_menu_layer_create(window_bounds,window,sections,1,NULL);
+  layer_add_child(stop_window_layer,simple_menu_layer_get_layer(stop_layer));
 }
 
 // Stop screen unload
 static void stop_window_unload(Window *window) {
-  text_layer_destroy(stop_text_layer);
+  simple_menu_layer_destroy(stop_layer);
 }
 
 // MAIN WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -254,6 +341,7 @@ static void init() {
     .load = stop_window_load,
     .unload = stop_window_unload
   });
+  window_set_click_config_provider(stop_window, stop_click_config_provider);
     
   // Start at main window
   window_stack_push(s_main_window, true);
