@@ -39,7 +39,7 @@ function convertTime(s) {
 
 function loadStops(){
   var req = new XMLHttpRequest();
-  req.open('GET', STOP_URL, true);
+  req.open('GET', STOP_URL, false);
   req.onload = function(){
     if(req.readyState === 4){
       stop_data = JSON.parse(req.responseText);
@@ -54,7 +54,7 @@ function loadStops(){
 
 function loadRoutes(){
   var req = new XMLHttpRequest();
-  req.open('GET',ROUTE_URL, true);
+  req.open('GET',ROUTE_URL, false);
   req.onload = function(){
     if(req.readyState === 4){
       route_data = JSON.parse(req.responseText);
@@ -91,7 +91,7 @@ function findRoutes(stop){
   return routeString.substring(0,routeString.length-1);
 }
 
-
+loadStops();  
 /* ================================================================================
                                   MESSAGING CODE
    ================================================================================*/
@@ -141,8 +141,6 @@ function error(err) {
 // Intial calback function from first communication
 Pebble.addEventListener('ready', function(e) {
   console.log('PebbleKit JS Ready!');
-  
-  loadStops();  
 });
 
 
