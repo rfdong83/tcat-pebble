@@ -83,7 +83,6 @@ function findRoutes(stop){
     .sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time) - time);});
   routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));  
   
-  
   var routeString = '';
   for (var i=0; i<routes.length; i++) {
     routeString += routes[i].Route + ',' + routes[i].Time + ',' + (routes[i].Direction == 'Inbound' ? 'I' : 'O') + ',';

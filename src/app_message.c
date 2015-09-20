@@ -15,6 +15,7 @@ static SimpleMenuSection sections[1];
 static SimpleMenuItem items[5];
 static char stops[5][30];
 static char sched[5][100];
+static char stop_text[100];
 
 
 // APP MESSAGE---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -120,8 +121,10 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 
 // MENU WINDOW---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-static void open_stop() {
+static void open_stop(int i, void* context) {
   window_stack_push(stop_window, true);
+  strcpy(stop_text, sched[i]);
+  APP_LOG(APP_LOG_LEVEL_DEBUG,stop_text);
 }
 
 static void menu_window_load(Window *window) {
@@ -163,7 +166,7 @@ static void stop_window_load(Window *window) {
   
   stop_text_layer = text_layer_create(window_bounds);
   text_layer_set_font(stop_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24));
-  text_layer_set_text(stop_text_layer, "HALLEFUCKINLUJAH");
+  text_layer_set_text(stop_text_layer, stop_text);
   text_layer_set_overflow_mode(stop_text_layer, GTextOverflowModeWordWrap);
   text_layer_set_text_alignment(stop_text_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(stop_text_layer));
