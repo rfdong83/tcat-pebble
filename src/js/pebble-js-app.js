@@ -1,7 +1,8 @@
 /*
- * pebble-js-app.js
- * Sends the sample message once it is initialized.
+ * TCAT app
+ * By: Ryan Dong, Michael Huang, and Alan Wu
  */
+
 var NUM_STOPS = 5;
 var NUM_ROUTES = 10;
 var STOP_URL = 'http://cornelldata.org/api/v0/TCAT-data/stop-locations';
@@ -68,28 +69,47 @@ function findStops(lat, long){
 function findRoutes(time, stop){
   var routes = stop_schedules_data.filter(function(a){return a.Stop == stop;})
     .sort(function(a,b){return (convertTime(a.Time) - time) - (convertTime(b.Time)-time);});
-  routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));
-  return routes;
+  routes = routes.slice(0,Math.min(routes.length, NUM_ROUTES));  
+  
+  var routeString = '';
+  for (var i=0; i<routes.length; i++) {
+    routeString += routes[i].Stop + ',' + routes[i].Time + ',';
+  }
+  return routeString;
 }
 
 
-// function findRoutes(stops){
-//   var req = new XMLHttpRequest();
-//   var iter = 0;
-//   req.open('GET', STOP_SCHED)
-// }
+/* ================================================================================
+                                  MESSAGING CODE
+   ================================================================================*/
 
-findStops(42.489067, -76.485206);
+// GPS options
+var options = {
+  enableHighAccuracy: true,
+  timeout: 5000,
+  maximumAge: 0
+};
 
-Pebble.addEventListener('ready', function(e) {
-  console.log('PebbleKit JS Ready!');
-
-  // Construct a dictionary
-  var dict = {
-    'KEY_DATA':'Hello from PebbleKit JS!'
-  };
-
-  // Send a string to Pebble
+/* Upon sucessful  */
+function success(pos) {
+  var crd = pos.coords;
+  var dict = {};
+  
+  var stops = findStops(crd.latitude, crd.longitude);
+  for (var i=0; i<stops.length; i++) {
+    dict.push({
+      key: i,
+      value: stops[i]
+    });
+  }
+  for (var j=0; j<stops.length; j++) {
+    dict.push({
+      key: j+5,
+      value: findRoutes(time, stops[j])
+    });
+  }
+  
+  // Send the data 
   Pebble.sendAppMessage(dict,
     function(e) {
       console.log('Send successful.');
@@ -98,4 +118,27 @@ Pebble.addEventListener('ready', function(e) {
       console.log('Send failed!');
     }
   );
+}
+
+// Callback function from miscommunication
+function error(err) {
+  console.warn('ERROR(' + err.code + '): ' + err.message);
+}
+
+
+// Intial calback function from first communication
+Pebble.addEventListener('ready', function(e) {
+  console.log('PebbleKit JS Ready!');
+  
+  loadStops();
+  navigator.geolocation.getCurrentPosition(success, error, options);
+  
 });
+
+
+Pebble.addEventListener('gpsrequest', function(e) {
+  console.log('Asking for GPS coords...');
+  
+  navigator.geolocation.getCurrentPosition(success, error, options);
+});
+
